@@ -105,7 +105,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs, data_dir, wr
 
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
-                corrects = torch.sum(preds == labels.data)
+                corrects = torch.sum(preds == labels.data).float()
                 running_corrects += corrects
                 niter = epoch * len(dataloaders[phase]) + batch_idx
                 writer.add_scalar(f'{phase}/Loss', loss.item(), niter)
@@ -124,7 +124,8 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs, data_dir, wr
                 best_model_wts = copy.deepcopy(model.state_dict())
 
             # log the best val accuracy to AML run
-            run.log('best_val_acc', np.float(best_acc))
+            if phase == 'val':                   
+                run.log('best_val_acc', np.float(best_acc))
 
         print()
 
@@ -149,7 +150,7 @@ def fine_tune_model(num_epochs, data_dir, learning_rate, momentum, writer):
 
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Linear(num_ftrs, num_classes)  # 40 classes to predict
+    model_ft.fc = nn.Linear(num_ftrs, num_classes)  # 10/120 classes to predict
 
     if torch.cuda.is_available():
         device = torch.device('cuda:0')
